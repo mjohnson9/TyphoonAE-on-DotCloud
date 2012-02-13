@@ -1,0 +1,151 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+mkdir extracted-tmp
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Extracting TyphoonAE..."
+tar -C extracted-tmp -zxf typhoonae.tar.gz
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+mv extracted-tmp/typhoonae* extracted
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+rm -r extracted-tmp
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+cp buildout.diff extracted
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+cp run extracted/typhoonae_run
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+chmod +x extracted/typhoonae_run
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Moving TyphoonAE files to home..."
+cp -a extracted/* ${HOME}
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+rm -rf extracted
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+cd ${HOME}
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Patching the buildout file..."
+patch -p0 -i buildout.diff buildout.cfg
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Setting up the virtualenv..."
+[ -d ${HOME}/bin ] || virtualenv --distribute ~
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Sourcing the activation file..."
+source ${HOME}/bin/activate
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Applying quick fix..."
+easy_install -U setuptools # Little fix for some problems I ran into with the helloworld app not working.
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+cd
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Bootstrapping..."
+python bootstrap.py
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+echo "Running buildout..."
+./bin/buildout
+if [ $? != "0" ]; then
+	echo "Got a bad exit code."
+	exit $?
+fi
+
+# echo "Removing old supervisor configuration..."
+# [ -f ${HOME}/supervisor.conf ] && rm ${HOME}/supervisor.conf
+# if [ $? != "0" ]; then
+# 	echo "Got a bad exit code."
+# 	exit $?
+# fi
+
+# echo "Backing up our supervisor configuration..."
+# cp ${HOME}/etc/supervisord.conf ${HOME}/etc/supervisord.conf.bak
+# if [ $? != "0" ]; then
+# 	echo "Got a bad exit code."
+# 	exit $?
+# fi
+
+# echo "Linking supervisor configuration..."
+# ln -sf ${HOME}/etc/supervisord.conf ${HOME}/supervisor.conf
+# if [ $? != "0" ]; then
+# 	echo "Got a bad exit code."
+# 	exit $?
+# fi
+
+echo "Patching NGINX port..."
+sed -i "s/listen      [0-9]*/listen      ${PORT_WWW}/g" etc/default-nginx.conf
+#echo "Patching TyphoonAE management port..."
+#sed -i "s/http_port = [0-9]*/http_port = ${PORT_MANAGEMENT}/g" etc/typhoonae.cfg
+echo "Setting up appcfg service..."
+APPCFG_PROXY=$(cat <<EOF
+upstream appcfg_service {
+	server 127.0.0.1:9190;
+}
+
+server {
+	listen      ${PORT_MANAGEMENT};
+	server_name appcfg.nightexcessive.us;
+
+	location / {
+		proxy_pass http://appcfg_service;
+		proxy_read_timeout 500;
+		proxy_send_timeout 500;
+	}
+}
+EOF
+)
+echo "$APPCFG_PROXY" > etc/appcfg-proxy-nginx.conf
+
+echo "Finished building successfuly."

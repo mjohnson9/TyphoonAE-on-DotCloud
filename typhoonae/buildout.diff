@@ -1,0 +1,4 @@
+122c120
+< url = ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.02.tar.gz
+---
+> url = ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.30.tar.gz

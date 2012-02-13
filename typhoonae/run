@@ -1,0 +1,4 @@
+#!/bin/sh
+cd ${HOME}
+echo "Starting TyphoonAE..."
+exec ./bin/supervisord --nodaemon -c "${HOME}/etc/supervisord.conf"

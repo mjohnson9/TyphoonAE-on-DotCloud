@@ -1,0 +1,23 @@
+typhoonae:
+  type: custom
+  buildscript: typhoonae/builder
+  process: ./typhoonae_run
+  ports:
+    www: http
+    management: tcp
+  systempackages:
+    - build-essential
+    - erlang-nox
+    - erlang-dev
+    - erlang-src
+    - gettext
+    - libexpat-dev
+    - libmysql++-dev
+    - libncurses5-dev
+    - libsqlite3-dev
+    - libssl-dev
+    - python-dev
+    - python-setuptools
+    - python-imaging
+    - python-virtualenv
+    - xsltproc
