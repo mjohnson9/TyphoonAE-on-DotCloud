@@ -1,4 +1,33 @@
 #!/bin/sh
 cd ${HOME}
+
+echo "Patching NGINX port..."
+
+sed -i "s/listen      [0-9]*/listen      ${PORT_WWW}/g" etc/default-nginx.conf
+
+#echo "Patching TyphoonAE management port..."
+#sed -i "s/http_port = [0-9]*/http_port = ${PORT_MANAGEMENT}/g" etc/typhoonae.cfg
+
+echo "Setting up appcfg service proxy..."
+APPCFG_PROXY=$(cat <<EOF
+upstream appcfg_service {
+	server 127.0.0.1:9190;
+}
+
+server {
+	listen      ${PORT_MANAGEMENT};
+	server_name appcfg.nightexcessive.us;
+
+	location / {
+		proxy_pass http://appcfg_service;
+		proxy_read_timeout 500;
+		proxy_send_timeout 500;
+	}
+}
+EOF
+)
+
+echo "$APPCFG_PROXY" > etc/appcfg-proxy-nginx.conf
+
 echo "Starting TyphoonAE..."
 exec ./bin/supervisord --nodaemon -c "${HOME}/etc/supervisord.conf"
