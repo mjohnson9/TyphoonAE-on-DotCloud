@@ -1,12 +1,15 @@
 #!/bin/sh
 cd ${HOME}
 
-echo "Patching NGINX port..."
+# echo "Patching NGINX port..."
 
-sed -i "s/listen      [0-9]*/listen      ${PORT_WWW}/g" etc/default-nginx.conf
+# sed -i "s/listen      [0-9]*/listen      ${PORT_WWW}/g" etc/default-nginx.conf
 
 #echo "Patching TyphoonAE management port..."
 #sed -i "s/http_port = [0-9]*/http_port = ${PORT_MANAGEMENT}/g" etc/typhoonae.cfg
+
+echo "Patching TyphoonAE management hostname..."
+sed -i "s/server_name = .*/server_name = ${SERVICE_HOSTNAME}/g" etc/typhoonae.cfg
 
 # echo "Setting up appcfg service proxy..."
 # APPCFG_PROXY=$(cat <<EOF
