@@ -2,6 +2,7 @@ typhoonae:
   type: custom
   buildscript: typhoonae/builder
   process: ./typhoonae_run
+  hostname: apps.nightexcessive.us
   ports:
     www: http
     management: tcp
